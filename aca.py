@@ -31,7 +31,16 @@ def run_benchmark(architecture, benchmark, icache_size, dcache_size, test_size, 
         raise Exception(f"Invalid dcache size '{dcache_size}'")
 
     for argument in arguments:
-        command = f"{gem5_path}/build/{architecture.upper()}/gem5.opt {gem5_path}/configs/example/se.py --cmd={binary} --options='{argument}' --caches --l1i_size={icache_size} --l1d_size={dcache_size}"
+        command = [
+            f"{gem5_path}/build/{architecture.upper()}/gem5.opt",
+            f"{gem5_path}/configs/example/se.py",
+            f"--cmd={binary}",
+            f"--options='{argument}'",
+            f"--caches",
+            f"--l1i_size={icache_size}",
+            f"--l1d_size={dcache_size}",
+            f"--cpu-type=TimingSimpleCPU",
+        ]
         output = subprocess.PIPE if mute_output else None
         proc = subprocess.Popen(command, shell=True, stdout=output, stderr=output)
         try:
@@ -69,7 +78,7 @@ if __name__ == "__main__":
         "x86",
         # "arm",
     ]
-    icache_sizes = dcache_sizes = [
+    cache_sizes = [
         "128B",
         "256B",
         "512B",
@@ -110,9 +119,9 @@ if __name__ == "__main__":
         write(f"Architecture: {architecture.upper()}\n")
         for benchmark in benchmarks:
             write(f"\tBenchmark: {benchmark.lower()}\n")
-            for icache_size in icache_sizes:
+            for icache_size in cache_sizes:
                 write(f"\t\tIcache: {icache_size}\n")
-                for dcache_size in dcache_sizes:
+                for dcache_size in cache_sizes:
                     write(f"\t\t\tDcache: {dcache_size}\n")
                     if time_executions == True:
                         start = time()
