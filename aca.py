@@ -1,5 +1,3 @@
-#!/usr/bin/python -u
-
 import subprocess, re, sys
 from time import time
 
