@@ -36,7 +36,7 @@ This directory contains the results of the simulations. The results are stored i
 
 - `arm_susan.csv`: Contains the CPI for the ARM architecture when running the susan benchmark and varying the cache size.
 
-### Simulation Logs
+### Simulations Logs
 
 This directory contains the logs of the simulations. The logs are stored in the following files:
 
@@ -64,17 +64,29 @@ This directory contains the plots of the simulations. The plots are stored in th
 
 The following parameters can be modified in the `aca.py` script:
 
+- `architectures`: Contains the architectures to be simulated.
+
 - `cache_sizes`: Contains the cache sizes to be used in the simulations.
 
-- `num_cpus`: Contains the number of CPUs to be used in the simulations.
+- `benchmarks`: Contains the benchmarks to be simulated.
 
-- 
+- `test_size`: Contains the size of the test to be run.
+
+- `mute_output`: If set to `True`, the output of the simulations will be muted.
+
+- `time_executions`: If set to `True`, the execution time of the simulations will be printed.
+
+- `write_to_file`: If set to `True`, the results of the simulations will be written to a file. The file name can be specified using the `output_file_name` parameter. Else, the results will be printed to stdout.
+
+- `append`: If set to `True`, the results of the simulations will be appended to the output file. Else, the file will be overwritten.
+
+- `output_file_name`: Contains the name of the file where the results of the simulations will be written.
 
 ## Dependencies
 
 The following dependencies are required to run the simulations:
 
-- Python 2.7
+- Python 3.6+
 
 - gem5
 
