@@ -84,8 +84,6 @@ The following dependencies are required to run the simulations:
 
 The code in this repository is licensed under the MIT license. For more information, see the LICENSE file.
 
-## Acknowledgements
+## Author
 
-The code in this repository was developed by:
-
-- [Erwan Régy](https://www.linkedin.com/in/erwanregy/)
+The code in this repository was developed by [Erwan Régy](https://www.linkedin.com/in/erwanregy/)
