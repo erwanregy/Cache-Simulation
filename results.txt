@@ -1,0 +1,24 @@
+Architecture: X86
+	Benchmark: crc
+		Icache: 128B
+			Dcache: 128B
+				CPI: 2.3927032238212402
+			Dcache: 256B
+				CPI: 2.3927032238212402
+			Dcache: 512B
+				CPI: 2.3927032238212402
+			Dcache: 1kB
+				CPI: 2.3927032238212402
+			Dcache: 2kB
+				CPI: 2.3927032238212402
+			Dcache: 4kB
+				CPI: 2.3927032238212402
+			Dcache: 8kB
+				CPI: 2.3927032238212402
+			Dcache: 16kB
+				CPI: 2.3927032238212402
+			Dcache: 32kB
+				CPI: 2.3927032238212402
+			Dcache: 64kB
+				CPI: 2.3927032238212402
+			Dcache: 128kB
