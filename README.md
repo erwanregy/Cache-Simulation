@@ -22,44 +22,6 @@ The simulations can be run by executing the following command:
 python aca.py
 ```
 
-The script will run the simulations for the x86 and ARM architectures and will generate the following directories:
-
-### Simulation Results
-
-This directory contains the results of the simulations. The results are stored in the following files:
-
-- `x86_crc.csv`: Contains the CPI for the x86 architecture when running the crc benchmark and varying the cache size.
-
-- `x86_susan.csv`: Contains the CPI for the x86 architecture when running the susan benchmark and varying the cache size.
-
-- `arm_crc.csv`: Contains the CPI for the ARM architecture when running the crc benchmark and varying the cache size.
-
-- `arm_susan.csv`: Contains the CPI for the ARM architecture when running the susan benchmark and varying the cache size.
-
-### Simulations Logs
-
-This directory contains the logs of the simulations. The logs are stored in the following files:
-
-- `x86_crc.log`: Contains the log of the simulation for the x86 architecture when running the crc benchmark and varying the cache size.
-
-- `x86_susan.log`: Contains the log of the simulation for the x86 architecture when running the susan benchmark and varying the cache size.
-
-- `arm_crc.log`: Contains the log of the simulation for the ARM architecture when running the crc benchmark and varying the cache size.
-
-- `arm_susan.log`: Contains the log of the simulation for the ARM architecture when running the susan benchmark and varying the cache size.
-
-### Simulation Plots
-
-This directory contains the plots of the simulations. The plots are stored in the following files:
-
-- `x86_crc.png`: Contains the plot of the CPI for the x86 architecture when running the crc benchmark and varying the cache size.
-
-- `x86_susan.png`: Contains the plot of the CPI for the x86 architecture when running the susan benchmark and varying the cache size.
-
-- `arm_crc.png`: Contains the plot of the CPI for the ARM architecture when running the crc benchmark and varying the cache size.
-
-- `arm_susan.png`: Contains the plot of the CPI for the ARM architecture when running the susan benchmark and varying the cache size.
-
 ## Simulation Parameters
 
 The following parameters can be modified in the `aca.py` script:
@@ -99,3 +61,44 @@ The code in this repository is licensed under the MIT license. For more informat
 ## Author
 
 The code in this repository was developed by [Erwan Régy](https://www.linkedin.com/in/erwanregy/)
+
+## TODO: Simulation Output
+
+The script will run the simulations for the x86 and ARM architectures and will generate the following directories:
+
+### Simulation Results
+
+This directory contains the results of the simulations. The results are stored in the following files:
+
+- `x86_crc.csv`: Contains the CPI for the x86 architecture when running the crc benchmark and varying the cache size.
+
+- `x86_susan.csv`: Contains the CPI for the x86 architecture when running the susan benchmark and varying the cache size.
+
+- `arm_crc.csv`: Contains the CPI for the ARM architecture when running the crc benchmark and varying the cache size.
+
+- `arm_susan.csv`: Contains the CPI for the ARM architecture when running the susan benchmark and varying the cache size.
+
+### Simulations Logs
+
+This directory contains the logs of the simulations. The logs are stored in the following files:
+
+- `x86_crc.log`: Contains the log of the simulation for the x86 architecture when running the crc benchmark and varying the cache size.
+
+- `x86_susan.log`: Contains the log of the simulation for the x86 architecture when running the susan benchmark and varying the cache size.
+
+- `arm_crc.log`: Contains the log of the simulation for the ARM architecture when running the crc benchmark and varying the cache size.
+
+- `arm_susan.log`: Contains the log of the simulation for the ARM architecture when running the susan benchmark and varying the cache size.
+
+### Simulation Plots
+
+This directory contains the plots of the simulations. The plots are stored in the following files:
+
+- `x86_crc.png`: Contains the plot of the CPI for the x86 architecture when running the crc benchmark and varying the cache size.
+
+- `x86_susan.png`: Contains the plot of the CPI for the x86 architecture when running the susan benchmark and varying the cache size.
+
+- `arm_crc.png`: Contains the plot of the CPI for the ARM architecture when running the crc benchmark and varying the cache size.
+
+- `arm_susan.png`: Contains the plot of the CPI for the ARM architecture when running the susan benchmark and varying the cache size.
+
