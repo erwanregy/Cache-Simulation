@@ -205,7 +205,7 @@ if __name__ == "__main__":
     if path.exists(args.output):
         print(f"File '{args.output}' already exists.", end=" ")
         print("Append?" if args.append else "Overwrite?", end=" ")
-        if input("(y/N) ") != "y":
+        if input("[y/N]: ") != "y":
             exit()
     elif args.append and not path.exists(args.output):
         print(f"File '{args.output}' does not exist. Creating it.")
