@@ -142,7 +142,7 @@ if __name__ == "__main__":
         "--icache_sizes",
         help="Instruction cache sizes to run the simulations for.",
         action="store",
-        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}KB" for i in range(9)]],
+        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}kB" for i in range(9)]],
         type=str,
         nargs="+",
     )
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         "-d",
         "--dcache_sizes",
         help="Data cache sizes to run the simulations for.",
-        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}KB" for i in range(9)]],
+        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}kB" for i in range(9)]],
         action="store",
         type=str,
         nargs="+",
@@ -165,10 +165,12 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "-t",
-        "--time",
-        help="Disable timing of the execution of each simulation and the entire script.",
-        action="store_false",
+        "-o",
+        "--output",
+        help="Output file for the results of the simulations.",
+        action="store",
+        default="results.csv",
+        type=str,
     )
     parser.add_argument(
         "-p",
@@ -178,18 +180,16 @@ if __name__ == "__main__":
         default=False,
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        help="Output file for the results of the simulations.",
-        action="store",
-        default="results.csv",
-        type=str,
-    )
-    parser.add_argument(
         "-v",
         "--verbose",
         help="Print the output of the simulations.",
         action="store_true",
+    )
+    parser.add_argument(
+        "-t",
+        "--time",
+        help="Disable timing of the execution of each simulation and the entire script.",
+        action="store_false",
     )
 
     args = parser.parse_args()
@@ -200,31 +200,29 @@ if __name__ == "__main__":
     print(f"  icache_sizes: {args.icache_sizes}")
     print(f"  dcache_sizes: {args.dcache_sizes}")
     print(f"  size: {args.size}")
-    print(f"  time: {args.time}")
-    print(f"  append: {args.append}")
     print(f"  output: {args.output}")
+    print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
+    print(f"  time: {args.time}")
 
     if not path.exists("./out"):
         makedirs("./out")
     args.output = "./out/" + args.output
     if not args.output.endswith(".csv"):
         args.output += ".csv"
-    if path.exists(args.output):
-        print(f"File '{args.output}' already exists.", end=" ")
-        print("Append?" if args.append else "Overwrite?", end=" ")
-        if input("[y/N]: ") != "y":
+    if not args.append and path.exists(args.output):
+        if input(f"File '{args.output}' already exists. Overwrite? [y/N]: ") != "y":
             exit()
     elif args.append and not path.exists(args.output):
         print(f"File '{args.output}' does not exist. Creating it.")
         args.append = False
 
     with open(args.output, "a" if args.append else "w") as output_file:
-        output_file.write(
-            "Architecture,Benchmark,Instruction Cache Size [B],Data Cache Size [B],CPI\n"
-            if not args.append
-            else ""
-        )
+        if not args.append:
+            output_file.write(
+                "Architecture,Benchmark,Instruction Cache Size [B],Data Cache Size [B],CPI\n"
+            )
+            output_file.flush()
         if args.time:
             script_start = time()
         for architecture in args.architectures:
@@ -232,7 +230,7 @@ if __name__ == "__main__":
                 for icache_size in args.icache_sizes:
                     for dcache_size in args.dcache_sizes:
                         print(
-                            f"Running {architecture.upper()} {benchmark.lower()} with {icache_size.upper()} instruction cache and {dcache_size.upper()} data cache...",
+                            f"Running {architecture.upper()} {benchmark.lower()} with {icache_size} instruction cache and {dcache_size} data cache...",
                             end=" ",
                         )
                         stdout.flush()
