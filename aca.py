@@ -134,7 +134,7 @@ if __name__ == "__main__":
         "--icache_sizes",
         help="Instruction cache sizes to run the simulations for.",
         action="store",
-        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}KB" for i in range(9)]],
+        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}kB" for i in range(9)]],
         type=str,
         nargs="+",
     )
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         "-d",
         "--dcache_sizes",
         help="Data cache sizes to run the simulations for.",
-        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}KB" for i in range(9)]],
+        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}kB" for i in range(9)]],
         action="store",
         type=str,
         nargs="+",
@@ -157,16 +157,12 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Print the output of the simulations.",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-t",
-        "--time",
-        help="Time the execution of each simulation and the entire script.",
-        action="store_false",
+        "-o",
+        "--output",
+        help="Output file for the results of the simulations.",
+        action="store",
+        default="results.csv",
+        type=str,
     )
     parser.add_argument(
         "-p",
@@ -176,12 +172,16 @@ if __name__ == "__main__":
         default=False,
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        help="Output file for the results of the simulations.",
-        action="store",
-        default="results.csv",
-        type=str,
+        "-t",
+        "--time",
+        help="Time the execution of each simulation and the entire script.",
+        action="store_false",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Print the output of the simulations.",
+        action="store_true",
     )
 
     args = parser.parse_args()
@@ -192,10 +192,10 @@ if __name__ == "__main__":
     print(f"  icache_sizes: {args.icache_sizes}")
     print(f"  dcache_sizes: {args.dcache_sizes}")
     print(f"  benchmark_size: {args.benchmark_size}")
+    print(f"  output: {args.output}")
+    print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
     print(f"  time: {args.time}")
-    print(f"  append: {args.append}")
-    print(f"  output: {args.output}")
 
     if not path.exists("./out"):
         makedirs("./out")
