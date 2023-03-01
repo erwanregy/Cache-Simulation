@@ -30,14 +30,13 @@ if __name__ == "__main__":
             raise Exception(f"Invalid architecture '{architecture}'")
 
         cache_size_pattern = r"^\d+(k|M)?B$"
-        if not match(cache_size_pattern, icache_size.upper()):
+        if not match(cache_size_pattern, icache_size):
             raise Exception(f"Invalid icache size '{icache_size}'")
-        elif not match(cache_size_pattern, dcache_size.upper()):
+        elif not match(cache_size_pattern, dcache_size):
             raise Exception(f"Invalid dcache size '{dcache_size}'")
         
         i = size_string_to_int(icache_size)
         d = size_string_to_int(dcache_size)
-        
         if not (i != 0 and ((i & (i - 1)) == 0)):
             raise Exception(f"Instruction cache size '{icache_size}' is not a power of 2")
         elif not (d != 0 and ((d & (d - 1)) == 0)):
@@ -157,7 +156,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-s",
-        "--size",
+        "--benchmark_size",
         help="Size of the input data for the benchmarks.",
         action="store",
         default="small",
@@ -199,7 +198,7 @@ if __name__ == "__main__":
     print(f"  benchmarks: {args.benchmarks}")
     print(f"  icache_sizes: {args.icache_sizes}")
     print(f"  dcache_sizes: {args.dcache_sizes}")
-    print(f"  size: {args.size}")
+    print(f"  benchmark_size: {args.benchmark_size}")
     print(f"  output: {args.output}")
     print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
