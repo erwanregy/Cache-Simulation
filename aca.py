@@ -7,7 +7,6 @@ if __name__ == "__main__":
     from re import match
     from sys import stdout
     from time import time
-    from shutil import rmtree
 
     def run_benchmark(architecture, benchmark, icache_size, dcache_size):
         if benchmark.lower() == "susan":
@@ -30,15 +29,24 @@ if __name__ == "__main__":
         elif architecture.upper() != "X86":
             raise Exception(f"Invalid architecture '{architecture}'")
 
-        cache_size_pattern = r"^\d+(K|M)?B$"
+        cache_size_pattern = r"^\d+(k|M)?B$"
         if not match(cache_size_pattern, icache_size.upper()):
-            raise Exception(f"Invalid icache benchmark_size '{icache_size}'")
+            raise Exception(f"Invalid icache size '{icache_size}'")
         elif not match(cache_size_pattern, dcache_size.upper()):
-            raise Exception(f"Invalid dcache benchmark_size '{dcache_size}'")
+            raise Exception(f"Invalid dcache size '{dcache_size}'")
+        
+        i = size_string_to_int(icache_size)
+        d = size_string_to_int(dcache_size)
+        
+        if not (i != 0 and ((i & (i - 1)) == 0)):
+            raise Exception(f"Instruction cache size '{icache_size}' is not a power of 2")
+        elif not (d != 0 and ((d & (d - 1)) == 0)):
+            raise Exception(f"Data cache size '{dcache_size}' is not a power of 2")
 
         for argument in arguments:
             command = [
                 f"./gem5/build/{architecture.upper()}/gem5.opt",
+                "--outdir=./gem5/m5out",
                 "./gem5/configs/example/se.py",
                 f"--cmd={binary}",
                 f"--options={argument}",
@@ -61,7 +69,7 @@ if __name__ == "__main__":
                 exit()
 
     def cpi():
-        with open("./m5out/stats.txt", "r") as stats_file:
+        with open("./gem5/m5out/stats.txt", "r") as stats_file:
             line = stats_file.readline()
             if not line:
                 raise Exception("Empty stats.txt")
@@ -77,16 +85,16 @@ if __name__ == "__main__":
             elif not cycle_count:
                 raise Exception("Could not find cycle count in stats.txt")
 
-    def size_string_to_int(benchmark_size: str) -> int:
-        if benchmark_size[:-1].isdigit() and benchmark_size.endswith("B"):
-            return int(benchmark_size[:-1])
-        elif benchmark_size[:-2].isdigit():
-            if benchmark_size.endswith("kB"):
-                return int(benchmark_size[:-2]) * 1000
-            elif benchmark_size.endswith("MB"):
-                return int(benchmark_size[:-2]) * 1000 * 1000
+    def size_string_to_int(size):
+        if size[:-1].isdigit() and size.endswith("B"):
+            return int(size[:-1])
+        elif size[:-2].isdigit():
+            if size.endswith("kB"):
+                return int(size[:-2]) * 1024
+            elif size.endswith("MB"):
+                return int(size[:-2]) * 1024 * 1024
         else:
-            raise ValueError(f"Invalid benchmark_size: {benchmark_size}")
+            raise ValueError(f"Invalid size: {size}")
 
     def format_time(time_in_seconds):
         if time_in_seconds < 1:
@@ -106,7 +114,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Run gem5 simulations for different architectures, benchmarks, and cache sizes.",
-        epilog="If no arguments are provided, the script will run all simulations.",
+        epilog="If no arguments are provided, the script will run all benchmarks for all architectures and a range of cache sizes.",
     )
 
     parser.add_argument(
@@ -115,7 +123,7 @@ if __name__ == "__main__":
         help="Architectures to run the simulations for.",
         action="store",
         default=["X86", "ARM"],
-        choices=["X86", "ARM"],
+        choices=["X86", "ARM", "x86", "Arm", "arm"],
         type=str,
         nargs="+",
     )
@@ -125,7 +133,7 @@ if __name__ == "__main__":
         help="Benchmarks to run the simulations for.",
         action="store",
         default=["crc", "susan"],
-        choices=["crc", "susan"],
+        choices=["crc", "CRC", "susan", "Susan", "SUSAN"],
         type=str,
         nargs="+",
     )
@@ -149,7 +157,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-s",
-        "--benchmark_size",
+        "--size",
         help="Size of the input data for the benchmarks.",
         action="store",
         default="small",
@@ -157,15 +165,9 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Print the output of the simulations.",
-        action="store_true",
-    )
-    parser.add_argument(
         "-t",
         "--time",
-        help="Time the execution of each simulation and the entire script.",
+        help="Disable timing of the execution of each simulation and the entire script.",
         action="store_false",
     )
     parser.add_argument(
@@ -183,6 +185,12 @@ if __name__ == "__main__":
         default="results.csv",
         type=str,
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Print the output of the simulations.",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -191,11 +199,11 @@ if __name__ == "__main__":
     print(f"  benchmarks: {args.benchmarks}")
     print(f"  icache_sizes: {args.icache_sizes}")
     print(f"  dcache_sizes: {args.dcache_sizes}")
-    print(f"  benchmark_size: {args.benchmark_size}")
-    print(f"  verbose: {args.verbose}")
+    print(f"  size: {args.size}")
     print(f"  time: {args.time}")
     print(f"  append: {args.append}")
     print(f"  output: {args.output}")
+    print(f"  verbose: {args.verbose}")
 
     if not path.exists("./out"):
         makedirs("./out")
@@ -243,5 +251,3 @@ if __name__ == "__main__":
         print("Script complete.", end=" " if args.time else "\n")
         if args.time:
             print(f"Total time taken: {format_time(time() - script_start)}")
-
-    rmtree("./m5out")
