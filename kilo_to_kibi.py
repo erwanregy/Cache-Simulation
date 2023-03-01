@@ -10,8 +10,8 @@ if __name__ == "__main__":
             return str(int(size))
     
     parser = argparse.ArgumentParser(
-        description="Run gem5 simulations for different architectures, benchmarks, and cache sizes.",
-        epilog="If no arguments are provided, the script will run all benchmarks for all architectures and a range of cache sizes.",
+        description="Converts kilobytes to kibibytes in aca.py output csv.",
+        epilog="Example: python kilo_to_kibi.py ./example/results.csv -o ./out/results_kibi.csv"
     )
 
     parser.add_argument(
