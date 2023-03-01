@@ -8,41 +8,47 @@ This repository contains the code for the first coursework of the Advanced Compu
 
 The repository is structured as follows:
 
-- `benchmarks`: Contains the source code for the benchmarks used in the simulation.
+- `gem5`: gem5 simulator repository.
 
-- `gem5`: Contains the source code for the gem5 simulator.
+- `benchmarks`: Benchmarks used in the simulation.
 
-- `aca.py`: Contains the script used to run the simulations.
+- `scripts`: Scripts used to run simulations and plot results.
 
 ## Running the simulations
 
 The simulations can be run by executing the following command:
 
 ```bash
-python aca.py
+python scripts/run_simulations.py
+```
+
+Likewise, the results can be plotted using the following command:
+
+```bash
+python scripts/plot_results.py
 ```
 
 ## Simulation Parameters
 
-The following parameters can be modified in the `aca.py` script:
+The following arguments can be added when running the `run_simulations` script:
 
-- `architectures`: Contains the architectures to be simulated.
-
-- `cache_sizes`: Contains the cache sizes to be used in the simulations.
+- `architectures`: Architectures to simulate.
 
 - `benchmarks`: Contains the benchmarks to be simulated.
 
-- `test_size`: Contains the size of the test to be run.
+- `icache_sizes`: Instruction cache sizes to simulate.
 
-- `mute_output`: If set to `True`, the output of the simulations will be muted.
+- `dcache_sizes`: Data cache sizes to simulate.
 
-- `time_executions`: If set to `True`, the execution time of the simulations will be printed.
+- `benchmark_size`: Size of the input data to the benchmarks.
 
-- `write_to_file`: If set to `True`, the results of the simulations will be written to a file. The file name can be specified using the `output_file_name` parameter. Else, the results will be printed to stdout.
+- `output_file`: File where the results of the simulations will be written.
 
-- `append`: If set to `True`, the results of the simulations will be appended to the output file. Else, the file will be overwritten.
+- `append`: Append the results to the output file, rather than overwriting.
 
-- `output_file_name`: Contains the name of the file where the results of the simulations will be written.
+- `verbose`: Show the output of each gem5 simulation.
+
+- `time`: Time the execution of each simulation and the entire script. By default this is set to true, so adding this argument will instead disable timing.
 
 ## Dependencies
 
