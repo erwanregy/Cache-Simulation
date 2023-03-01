@@ -30,7 +30,7 @@ if __name__ == "__main__":
         elif architecture.upper() != "X86":
             raise Exception(f"Invalid architecture '{architecture}'")
 
-        cache_size_pattern = r"^\d+(K|M)?B$"
+        cache_size_pattern = r"^\d+(k|M|G)?B$"
         if not match(cache_size_pattern, icache_size.upper()):
             raise Exception(f"Invalid icache benchmark_size '{icache_size}'")
         elif not match(cache_size_pattern, dcache_size.upper()):
@@ -202,10 +202,8 @@ if __name__ == "__main__":
     args.output = "./out/" + args.output
     if not args.output.endswith(".csv"):
         args.output += ".csv"
-    if path.exists(args.output):
-        print(f"File '{args.output}' already exists.", end=" ")
-        print("Append?" if args.append else "Overwrite?", end=" ")
-        if input("[y/N]: ") != "y":
+    if not args.append and path.exists(args.output):
+        if input(f"File '{args.output}' already exists. Overwrite? [y/N]: ") != "y":
             exit()
     elif args.append and not path.exists(args.output):
         print(f"File '{args.output}' does not exist. Creating it.")
@@ -224,7 +222,7 @@ if __name__ == "__main__":
                 for icache_size in args.icache_sizes:
                     for dcache_size in args.dcache_sizes:
                         print(
-                            f"Running {architecture.upper()} {benchmark.lower()} with {icache_size.upper()} instruction cache and {dcache_size.upper()} data cache...",
+                            f"Running {architecture.upper()} {benchmark.lower()} with {icache_size} instruction cache and {dcache_size} data cache...",
                             end=" ",
                         )
                         stdout.flush()
