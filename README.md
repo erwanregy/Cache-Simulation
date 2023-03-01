@@ -14,7 +14,7 @@ The repository is structured as follows:
 
 - `scripts`: Scripts used to run simulations and plot results.
 
-## Running the simulations
+## Running the scripts
 
 The simulations can be run by executing the following command:
 
