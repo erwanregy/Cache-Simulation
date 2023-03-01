@@ -212,11 +212,11 @@ if __name__ == "__main__":
         args.append = False
 
     with open(args.output, "a" if args.append else "w") as output_file:
-        output_file.write(
-            "Architecture,Benchmark,Instruction Cache Size [B],Data Cache Size [B],CPI\n"
-            if not args.append
-            else ""
-        )
+        if not args.append:
+            output_file.write(
+                "Architecture,Benchmark,Instruction Cache Size [B],Data Cache Size [B],CPI\n"
+            )
+            output_file.flush()
         if args.time:
             script_start = time()
         for architecture in args.architectures:
