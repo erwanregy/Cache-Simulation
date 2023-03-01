@@ -48,11 +48,9 @@ The following parameters can be modified in the `aca.py` script:
 
 The following dependencies are required to run the simulations:
 
-- Python 3.6+
+- Python 3.10+
 
 - gem5
-
-- matplotlib
 
 ## License
 
