@@ -46,14 +46,12 @@ if __name__ == "__main__":
     from os import path, makedirs
     import matplotlib.pyplot as plt
     
-    results_file_name = "./example/results_complete.csv"
-    
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
         "input_file",
         action="store",
-        default="./example/results.csv",
+        default="example/results.csv",
         type=str,
         nargs="?",
     )
@@ -61,7 +59,7 @@ if __name__ == "__main__":
         "-o",
         "--output_directory",
         action="store",
-        default="./out/plots",
+        default="out/plots",
         type=str,
         nargs=1,
     )
