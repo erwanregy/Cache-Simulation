@@ -165,7 +165,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-o",
-        "--output",
+        "--output_file",
         help="Output file for the results of the simulations.",
         action="store",
         default="results.csv",
@@ -199,24 +199,24 @@ if __name__ == "__main__":
     print(f"  icache_sizes: {args.icache_sizes}")
     print(f"  dcache_sizes: {args.dcache_sizes}")
     print(f"  benchmark_size: {args.benchmark_size}")
-    print(f"  output: {args.output}")
+    print(f"  output_file: {args.output_file}")
     print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
     print(f"  time: {args.time}")
 
     if not path.exists("./out"):
         makedirs("./out")
-    args.output = "./out/" + args.output
-    if not args.output.endswith(".csv"):
-        args.output += ".csv"
-    if not args.append and path.exists(args.output):
-        if input(f"File '{args.output}' already exists. Overwrite? [y/N]: ") != "y":
+    args.output_file = "./out/" + args.output_file
+    if not args.output_file.endswith(".csv"):
+        args.output_file += ".csv"
+    if not args.append and path.exists(args.output_file):
+        if input(f"File '{args.output_file}' already exists. Overwrite? [y/N]: ") != "y":
             exit()
-    elif args.append and not path.exists(args.output):
-        print(f"File '{args.output}' does not exist. Creating it.")
+    elif args.append and not path.exists(args.output_file):
+        print(f"File '{args.output_file}' does not exist. Creating it.")
         args.append = False
 
-    with open(args.output, "a" if args.append else "w") as output_file:
+    with open(args.output_file, "a" if args.append else "w") as output_file:
         if not args.append:
             output_file.write(
                 "Architecture,Benchmark,Instruction Cache Size [B],Data Cache Size [B],CPI\n"
