@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     def run_benchmark(architecture, benchmark, icache_size, dcache_size):
         if benchmark.lower() == "susan":
-            susan_path = f"./benchmarks/automotive/susan"
+            susan_path = f"benchmarks/susan"
             binary = f"{susan_path}/susan"
             arguments = [
                 f"{susan_path}/input_{args.benchmark_size}.pgm {susan_path}/output_{args.benchmark_size}.smoothing.pgm -s",
@@ -18,9 +18,8 @@ if __name__ == "__main__":
                 f"{susan_path}/input_{args.benchmark_size}.pgm {susan_path}/output_{args.benchmark_size}.corners.pgm -c",
             ]
         elif benchmark.lower() == "crc":
-            telecomm_path = f"./benchmarks/telecomm"
-            binary = f"{telecomm_path}/CRC32/crc"
-            arguments = [f"{telecomm_path}/adpcm/data/{args.benchmark_size}.pcm"]
+            binary = "benchmarks/CRC32/crc"
+            arguments = [f"benchmarks/adpcm/data/{args.benchmark_size}.pcm"]
         else:
             raise Exception(f"Invalid benchmark '{benchmark}'")
 
@@ -44,9 +43,9 @@ if __name__ == "__main__":
 
         for argument in arguments:
             command = [
-                f"./gem5/build/{architecture.upper()}/gem5.opt",
-                "--outdir=./gem5/m5out",
-                "./gem5/configs/example/se.py",
+                f"gem5/build/{architecture.upper()}/gem5.opt",
+                "--outdir=gem5/m5out",
+                "gem5/configs/example/se.py",
                 f"--cmd={binary}",
                 f"--options={argument}",
                 # Add arguments to se.py here
@@ -68,7 +67,7 @@ if __name__ == "__main__":
                 exit()
 
     def cpi():
-        with open("./gem5/m5out/stats.txt", "r") as stats_file:
+        with open("gem5/m5out/stats.txt", "r") as stats_file:
             line = stats_file.readline()
             if not line:
                 raise Exception("Empty stats.txt")
@@ -122,8 +121,8 @@ if __name__ == "__main__":
         help="Architectures to run the simulations for.",
         action="store",
         default=["X86", "ARM"],
-        choices=["X86", "ARM", "x86", "Arm", "arm"],
-        type=str,
+        choices=["X86", "ARM"],
+        type=str.upper,
         nargs="+",
     )
     parser.add_argument(
@@ -132,8 +131,8 @@ if __name__ == "__main__":
         help="Benchmarks to run the simulations for.",
         action="store",
         default=["crc", "susan"],
-        choices=["crc", "CRC", "susan", "Susan", "SUSAN"],
-        type=str,
+        choices=["crc", "susan"],
+        type=str.lower,
         nargs="+",
     )
     parser.add_argument(
@@ -204,9 +203,9 @@ if __name__ == "__main__":
     print(f"  verbose: {args.verbose}")
     print(f"  time: {args.time}")
 
-    if not path.exists("./out"):
-        makedirs("./out")
-    args.output_file = "./out/" + args.output_file
+    if not path.exists("out"):
+        makedirs("out")
+    args.output_file = "out/" + args.output_file
     if not args.output_file.endswith(".csv"):
         args.output_file += ".csv"
     if not args.append and path.exists(args.output_file):
