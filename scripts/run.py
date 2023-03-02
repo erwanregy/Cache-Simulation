@@ -15,7 +15,7 @@ def run_simulation(
     cacheline_size=None,
 ):
     if args.test:
-        binary = "benchmarks/test/test"
+        binary = "benchmarks/dummy/dummy"
         arguments = [""]
     elif benchmark.lower() == "susan":
         susan_path = f"benchmarks/susan"
