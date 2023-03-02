@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 if __name__ == "__main__":
     import argparse
     from os import path, makedirs
@@ -136,25 +134,25 @@ if __name__ == "__main__":
         nargs="+",
     )
     parser.add_argument(
-        "-i",
+        "-is",
         "--icache_sizes",
         help="Instruction cache sizes to run the simulations for.",
         action="store",
-        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}kB" for i in range(9)]],
+        default=[f"{2**i}kB" for i in range(1, 6)],
         type=str,
         nargs="+",
     )
     parser.add_argument(
-        "-d",
+        "-ds",
         "--dcache_sizes",
         help="Data cache sizes to run the simulations for.",
-        default=[*[f"{2**i}B" for i in range(7, 10)], *[f"{2**i}kB" for i in range(9)]],
+        default=[f"{2**i}kB" for i in range(1, 7)],
         action="store",
         type=str,
         nargs="+",
     )
     parser.add_argument(
-        "-s",
+        "-bs",
         "--benchmark_size",
         help="Size of the input data for the benchmarks.",
         action="store",
@@ -171,7 +169,7 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "-p",
+        "-ap",
         "--append",
         help="Append to the output file rather than overwriting.",
         action="store_true",
@@ -182,12 +180,6 @@ if __name__ == "__main__":
         "--verbose",
         help="Print the output of the simulations.",
         action="store_true",
-    )
-    parser.add_argument(
-        "-t",
-        "--time",
-        help="Disable timing of the execution of each simulation and the entire script.",
-        action="store_false",
     )
 
     args = parser.parse_args()
@@ -201,7 +193,6 @@ if __name__ == "__main__":
     print(f"  output_file: {args.output_file}")
     print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
-    print(f"  time: {args.time}")
 
     if not path.exists("out"):
         makedirs("out")
@@ -221,8 +212,7 @@ if __name__ == "__main__":
                 "Architecture,Benchmark,Instruction Cache Size [B],Data Cache Size [B],CPI\n"
             )
             output_file.flush()
-        if args.time:
-            script_start = time()
+        script_start = time()
         for architecture in args.architectures:
             for benchmark in args.benchmarks:
                 for icache_size in args.icache_sizes:
@@ -232,18 +222,13 @@ if __name__ == "__main__":
                             end=" ",
                         )
                         stdout.flush()
-                        if args.time:
-                            simulation_start = time()
+                        simulation_start = time()
                         run_benchmark(architecture, benchmark, icache_size, dcache_size)
-                        if args.time:
-                            simulation_end = time()
-                        print("Done.", end=" " if args.time else "\n")
-                        if args.time:
-                            print(f"({format_time(simulation_end - simulation_start)})")
+                        simulation_end = time()
+                        print(f"Done. ({format_time(simulation_end - simulation_start)})")
                         output_file.write(
                             f"{architecture.upper()},{benchmark.lower()},{size_string_to_int(icache_size)},{size_string_to_int(dcache_size)},{cpi()}\n"
                         )
                         output_file.flush()
-        print("Script complete.", end=" " if args.time else "\n")
-        if args.time:
-            print(f"Total time taken: {format_time(time() - script_start)}")
+        script_end = time()
+        print(f"Script complete. Total time taken: {format_time(script_end - script_start)}")
