@@ -7,6 +7,7 @@ from re import match
 
 
 def run_simulation(
+    args,
     architecture,
     benchmark,
     icache_size="4kB",
@@ -140,8 +141,7 @@ def format_time(time_in_seconds):
                 f"{int(time_in_seconds / 3600)}h {int((time_in_seconds % 3600) / 60)}m"
             )
 
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -313,6 +313,7 @@ if __name__ == "__main__":
                         stdout.flush()
                         simulation_start = time()
                         run_simulation(
+                            args,
                             architecture,
                             benchmark,
                             icache_size=icache_size,
@@ -337,6 +338,7 @@ if __name__ == "__main__":
                         stdout.flush()
                         simulation_start = time()
                         run_simulation(
+                            args,
                             architecture,
                             benchmark,
                             dcache_associativity=dcache_associativity,
@@ -358,3 +360,6 @@ if __name__ == "__main__":
 
     for output_file in output_files:
         output_file.close()
+
+if __name__ == "__main__":
+    main()
