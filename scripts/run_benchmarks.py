@@ -70,7 +70,7 @@ if __name__ == "__main__":
         with open("gem5/m5out/stats.txt", "r") as stats_file:
             line = stats_file.readline()
             if not line:
-                raise Exception("Empty stats.txt")
+                raise Exception("Empty stats.txt, try using the --verbose flag to check simulation output")
             while line:
                 if line.startswith("simInsts"):
                     instruction_count = int(line.split()[1])
