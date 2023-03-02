@@ -225,7 +225,7 @@ if __name__ == "__main__":
         "--output_directory",
         help="Output directory for the results of the simulations.",
         action="store",
-        default="out/results",
+        default="results",
         type=str,
     )
     parser.add_argument(
@@ -267,6 +267,7 @@ if __name__ == "__main__":
     print(f"  test: {args.test}")
     input("Press enter to confirm and continue...")
 
+    args.output_directory = f"out/{args.output_directory}"
     if not path.exists(args.output_directory):
         makedirs(args.output_directory)
     elif (
@@ -276,9 +277,7 @@ if __name__ == "__main__":
         exit()
 
     output_files = [
-        open(
-            f"{args.output_directory}/part_{part}.csv", "a" if args.append else "w"
-        )
+        open(f"{args.output_directory}/part_{part}.csv", "a" if args.append else "w")
         for part in args.parts
     ]
 
