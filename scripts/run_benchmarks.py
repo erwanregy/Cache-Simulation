@@ -216,6 +216,7 @@ if __name__ == "__main__":
     print(f"  output_file: {args.output_file}")
     print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
+    input("Press enter to confirm and continue...")
 
     if not path.exists("out"):
         makedirs("out")
