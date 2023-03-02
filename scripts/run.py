@@ -14,7 +14,7 @@ def run_simulation(
     dcache_associativity=None,
     cacheline_size=None,
 ):
-    if args.test:
+    if benchmark.lower() == "dummy":
         binary = "benchmarks/dummy/dummy"
         arguments = [""]
     elif benchmark.lower() == "susan":
@@ -145,12 +145,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        "-t",
+        "--test",
+        help="Test script using a dummy binary.",
+        action="store_true",
+    )
+    parser.add_argument(
         "-p",
         "--parts",
         help="Parts of the assignment to run.",
         action="store",
         default=["a", "b"],
-        choices=["a", "b"],
+        choices=["a", "b", "1", "2"],
         type=str.lower,
         nargs="+",
     )
@@ -241,16 +247,17 @@ if __name__ == "__main__":
         help="Print the output of the simulations.",
         action="store_true",
     )
-    parser.add_argument(
-        "-t",
-        "--test",
-        help="Test script using a dummy binary.",
-        action="store_true",
-    )
 
     args = parser.parse_args()
+    
+    if args.test:
+        args.benchmarks = ["dummy"]
+    
+    args.parts = [part.replace("1", "a").replace("2", "b") for part in args.parts]
+    
 
     print("Running with the following parameters:")
+    print(f"  test: {args.test}")
     print(f"  parts: {args.parts}")
     print(f"  architectures: {args.architectures}")
     print(f"  benchmarks: {args.benchmarks}")
@@ -264,7 +271,6 @@ if __name__ == "__main__":
     print(f"  output_directory: {args.output_directory}")
     print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
-    print(f"  test: {args.test}")
     input("Press enter to confirm and continue...")
 
     args.output_directory = f"out/{args.output_directory}"
@@ -289,7 +295,7 @@ if __name__ == "__main__":
         file_number += 1
     if "b" in args.parts:
         output_files[file_number].write(
-            "Architecture,Benchmark,DCache Associativity,Cacheline Size,Overall Miss Rate\n"
+            "Architecture,Benchmark,DCache Associativity,Cacheline Size [B],Overall Miss Rate\n"
         )
         file_number += 1
 
@@ -325,7 +331,7 @@ if __name__ == "__main__":
                 for dcache_associativity in args.dcache_associativity:
                     for cacheline_size in args.cacheline_sizes:
                         print(
-                            f"Simulating {benchmark.lower()} on {architecture.upper()} with {dcache_associativity} way dcache and {cacheline_size} cacheline...",
+                            f"Simulating {benchmark.lower()} on {architecture.upper()} with {dcache_associativity} way dcache and {cacheline_size}B cachelines...",
                             end=" ",
                         )
                         stdout.flush()
