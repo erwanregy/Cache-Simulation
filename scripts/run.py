@@ -7,6 +7,7 @@ from re import match
 
 
 def run_simulation(
+    args,
     architecture,
     benchmark,
     icache_size="4kB",
@@ -14,8 +15,8 @@ def run_simulation(
     dcache_associativity=None,
     cacheline_size=None,
 ):
-    if args.test:
-        binary = "benchmarks/test/test"
+    if benchmark.lower() == "dummy":
+        binary = "benchmarks/dummy/dummy"
         arguments = [""]
     elif benchmark.lower() == "susan":
         susan_path = f"benchmarks/susan"
@@ -140,17 +141,22 @@ def format_time(time_in_seconds):
                 f"{int(time_in_seconds / 3600)}h {int((time_in_seconds % 3600) / 60)}m"
             )
 
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        "-t",
+        "--test",
+        help="Test script using a dummy binary.",
+        action="store_true",
+    )
     parser.add_argument(
         "-p",
         "--parts",
         help="Parts of the assignment to run.",
         action="store",
         default=["a", "b"],
-        choices=["a", "b"],
+        choices=["a", "b", "1", "2"],
         type=str.lower,
         nargs="+",
     )
@@ -225,7 +231,7 @@ if __name__ == "__main__":
         "--output_directory",
         help="Output directory for the results of the simulations.",
         action="store",
-        default="out/results",
+        default="results",
         type=str,
     )
     parser.add_argument(
@@ -241,16 +247,17 @@ if __name__ == "__main__":
         help="Print the output of the simulations.",
         action="store_true",
     )
-    parser.add_argument(
-        "-t",
-        "--test",
-        help="Test script using a dummy binary.",
-        action="store_true",
-    )
 
     args = parser.parse_args()
+    
+    if args.test:
+        args.benchmarks = ["dummy"]
+    
+    args.parts = [part.replace("1", "a").replace("2", "b") for part in args.parts]
+    
 
     print("Running with the following parameters:")
+    print(f"  test: {args.test}")
     print(f"  parts: {args.parts}")
     print(f"  architectures: {args.architectures}")
     print(f"  benchmarks: {args.benchmarks}")
@@ -264,9 +271,9 @@ if __name__ == "__main__":
     print(f"  output_directory: {args.output_directory}")
     print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
-    print(f"  test: {args.test}")
     input("Press enter to confirm and continue...")
 
+    args.output_directory = f"out/{args.output_directory}"
     if not path.exists(args.output_directory):
         makedirs(args.output_directory)
     elif (
@@ -276,9 +283,7 @@ if __name__ == "__main__":
         exit()
 
     output_files = [
-        open(
-            f"{args.output_directory}/part_{part}.csv", "a" if args.append else "w"
-        )
+        open(f"{args.output_directory}/part_{part}.csv", "a" if args.append else "w")
         for part in args.parts
     ]
 
@@ -290,7 +295,7 @@ if __name__ == "__main__":
         file_number += 1
     if "b" in args.parts:
         output_files[file_number].write(
-            "Architecture,Benchmark,DCache Associativity,Cacheline Size,Overall Miss Rate\n"
+            "Architecture,Benchmark,DCache Associativity,Cacheline Size [B],Overall Miss Rate\n"
         )
         file_number += 1
 
@@ -308,6 +313,7 @@ if __name__ == "__main__":
                         stdout.flush()
                         simulation_start = time()
                         run_simulation(
+                            args,
                             architecture,
                             benchmark,
                             icache_size=icache_size,
@@ -326,12 +332,13 @@ if __name__ == "__main__":
                 for dcache_associativity in args.dcache_associativity:
                     for cacheline_size in args.cacheline_sizes:
                         print(
-                            f"Simulating {benchmark.lower()} on {architecture.upper()} with {dcache_associativity} way dcache and {cacheline_size} cacheline...",
+                            f"Simulating {benchmark.lower()} on {architecture.upper()} with {dcache_associativity} way dcache and {cacheline_size}B cachelines...",
                             end=" ",
                         )
                         stdout.flush()
                         simulation_start = time()
                         run_simulation(
+                            args,
                             architecture,
                             benchmark,
                             dcache_associativity=dcache_associativity,
@@ -353,3 +360,6 @@ if __name__ == "__main__":
 
     for output_file in output_files:
         output_file.close()
+
+if __name__ == "__main__":
+    main()
