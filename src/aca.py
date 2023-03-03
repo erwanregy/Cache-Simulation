@@ -127,7 +127,7 @@ def format_time(time_in_seconds):
             )
 
 
-def main():
+def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -234,90 +234,106 @@ def main():
         action="store_true",
     )
 
-    args = parser.parse_args()
+    arguments = parser.parse_args()
 
-    if args.test:
-        args.benchmarks = ["dummy"]
+    if arguments.test:
+        arguments.benchmarks = ["dummy"]
 
-    args.parts = [part.replace("1", "a").replace("2", "b") for part in args.parts]
+    arguments.parts = [
+        part.replace("1", "a").replace("2", "b") for part in arguments.parts
+    ]
 
-    print("Running with the following parameters:")
-    print(f"  test: {args.test}")
-    print(f"  parts: {args.parts}")
-    print(f"  architectures: {args.architectures}")
-    print(f"  benchmarks: {args.benchmarks}")
-    if "a" in args.parts:
-        print(f"  icache_sizes: {args.icache_sizes}")
-        print(f"  dcache_sizes: {args.dcache_sizes}")
-    if "b" in args.parts:
-        print(f"  dcache_associativity: {args.dcache_associativity}")
-        print(f"  cacheline_size: {args.cacheline_sizes}")
-    print(f"  benchmark_size: {args.benchmark_size}")
-    print(f"  output_directory: {args.output_directory}")
-    print(f"  append: {args.append}")
-    print(f"  verbose: {args.verbose}")
+    return arguments
+
+
+def print_arguments(arguments):
+    print("Arguments:")
+    print(f"  test: {arguments.test}")
+    print(f"  parts: {arguments.parts}")
+    print(f"  architectures: {arguments.architectures}")
+    print(f"  benchmarks: {arguments.benchmarks}")
+    if "a" in arguments.parts:
+        print(f"  icache_sizes: {arguments.icache_sizes}")
+        print(f"  dcache_sizes: {arguments.dcache_sizes}")
+    if "b" in arguments.parts:
+        print(f"  dcache_associativity: {arguments.dcache_associativity}")
+        print(f"  cacheline_size: {arguments.cacheline_sizes}")
+    print(f"  benchmark_size: {arguments.benchmark_size}")
+    print(f"  output_directory: {arguments.output_directory}")
+    print(f"  append: {arguments.append}")
+    print(f"  verbose: {arguments.verbose}")
     input("Press enter to confirm and continue... ")
 
-    args.output_directory = f"out/{args.output_directory}"
-    if not path.exists(args.output_directory):
-        makedirs(args.output_directory)
-    elif not args.append and (
-        input(f"Directory '{args.output_directory}' already exists. Overwrite? [y/N]: ")
+
+def setup_output_directory(arguments):
+    arguments.output_directory = f"out/{arguments.output_directory}"
+    if not path.exists(arguments.output_directory):
+        makedirs(arguments.output_directory)
+    elif not arguments.append and (
+        input(
+            f"Directory '{arguments.output_directory}' already exists. Overwrite? [y/N]: "
+        )
         != "y"
     ):
         exit()
 
-    class Part:
-        def __init__(self, output_file, variables, statistic):
-            self.output_file = output_file
-            self.variables = variables
-            self.statistic = statistic
 
-    class Variable:
-        def __init__(self, value, argument, name, units=None):
-            self.value = value
-            self.argument = argument
-            self.name = name
-            self.units = units
+class Part:
+    def __init__(self, output_file, variables, statistic):
+        self.output_file = output_file
+        self.variables = variables
+        self.statistic = statistic
 
+
+class Variable:
+    def __init__(self, value, argument, name, units=None):
+        self.value = value
+        self.argument = argument
+        self.name = name
+        self.units = units
+
+
+def setup_parts(arguments):
     parts = {}
-    for part in args.parts:
+    for part in arguments.parts:
         output_file = open(
-            f"{args.output_directory}/part_{part}.csv", "a" if args.append else "w"
+            f"{arguments.output_directory}/part_{part}.csv",
+            "a" if arguments.append else "w",
         )
         if part == "a":
             variables = [
-                Variable(args.icache_sizes, "l1i_size", "ICache Size", "B"),
-                Variable(args.dcache_sizes, "l1d_size", "DCache Size", "B"),
+                Variable(arguments.icache_sizes, "l1i_size", "ICache Size", "B"),
+                Variable(arguments.dcache_sizes, "l1d_size", "DCache Size", "B"),
             ]
             statistic = "Cycles Per Instruction"
         elif part == "b":
             variables = [
                 Variable(
-                    args.dcache_associativity, "l1d_assoc", "DCache Associativity"
+                    arguments.dcache_associativity, "l1d_assoc", "DCache Associativity"
                 ),
-                Variable(args.cacheline_sizes, "cacheline_size", "Cacheline Size"),
+                Variable(arguments.cacheline_sizes, "cacheline_size", "Cacheline Size"),
             ]
             statistic = "Overall DCache Miss Rate"
-        if not args.append:
+
+        if not arguments.append:
             output_file.write(
                 "Architecture,Benchmark,"
                 + ",".join(
-                    variable.name
-                    + (
-                        f"({variable.units})"
-                        if variable.units
-                        else ""
-                    )
+                    variable.name + (f"({variable.units})" if variable.units else "")
                     for variable in variables
                 )
                 + f",{statistic}\n"
             )
+
         parts[part] = Part(output_file, variables, statistic)
 
+    return parts
+
+
+def run_simulations(arguments, parts):
     script_start = time()
-    for architecture in args.architectures:
-        for benchmark in args.benchmarks:
+    for architecture in arguments.architectures:
+        for benchmark in arguments.benchmarks:
             for part in parts.values():
                 for variable_value_0 in part.variables[0].value:
                     for variable_value_1 in part.variables[1].value:
@@ -348,9 +364,9 @@ def main():
                         run_simulation(
                             architecture,
                             benchmark,
-                            args.benchmark_size,
+                            arguments.benchmark_size,
                             variables,
-                            args.verbose,
+                            arguments.verbose,
                         )
                         simulation_end = time()
                         print(
@@ -374,7 +390,3 @@ def main():
 
     for part in parts.values():
         part.output_file.close()
-
-
-if __name__ == "__main__":
-    main()
