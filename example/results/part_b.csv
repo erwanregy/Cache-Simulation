@@ -1,4 +1,4 @@
-Architecture,Benchmark,DCache Associativity,Cacheline Size,Overall Miss Rate
+Architecture,Benchmark,DCache Associativity,Cacheline Size,Overall DCache Miss Rate
 X86,crc,1,16,0.013452
 X86,crc,1,32,0.016689
 X86,crc,1,64,0.021562
