@@ -7,13 +7,11 @@ from re import match
 
 
 def run_simulation(
-    args,
     architecture,
     benchmark,
-    icache_size="4kB",
-    dcache_size="4kB",
-    dcache_associativity=None,
-    cacheline_size=None,
+    benchmark_size,
+    variables,
+    verbose,
 ):
     if benchmark.lower() == "dummy":
         binary = "benchmarks/dummy/dummy"
@@ -22,13 +20,13 @@ def run_simulation(
         susan_path = f"benchmarks/susan"
         binary = f"{susan_path}/susan"
         arguments = [
-            f"{susan_path}/input_{args.benchmark_size}.pgm {susan_path}/output_{args.benchmark_size}.smoothing.pgm -s",
-            f"{susan_path}/input_{args.benchmark_size}.pgm {susan_path}/output_{args.benchmark_size}.edges.pgm -e",
-            f"{susan_path}/input_{args.benchmark_size}.pgm {susan_path}/output_{args.benchmark_size}.corners.pgm -c",
+            f"{susan_path}/input_{benchmark_size}.pgm {susan_path}/output_{benchmark_size}.smoothing.pgm -s",
+            f"{susan_path}/input_{benchmark_size}.pgm {susan_path}/output_{benchmark_size}.edges.pgm -e",
+            f"{susan_path}/input_{benchmark_size}.pgm {susan_path}/output_{benchmark_size}.corners.pgm -c",
         ]
     elif benchmark.lower() == "crc":
         binary = "benchmarks/CRC32/crc"
-        arguments = [f"benchmarks/adpcm/data/{args.benchmark_size}.pcm"]
+        arguments = [f"benchmarks/adpcm/data/{benchmark_size}.pcm"]
     else:
         raise Exception(f"Invalid benchmark '{benchmark}'")
 
@@ -37,18 +35,18 @@ def run_simulation(
     elif architecture.upper() != "X86":
         raise Exception(f"Invalid architecture '{architecture}'")
 
-    cache_size_pattern = r"^\d+(k|M)?B$"
-    if not match(cache_size_pattern, icache_size):
-        raise Exception(f"Invalid icache size '{icache_size}'")
-    elif not match(cache_size_pattern, dcache_size):
-        raise Exception(f"Invalid dcache size '{dcache_size}'")
-
-    i = size_string_to_int(icache_size)
-    d = size_string_to_int(dcache_size)
-    if not (i != 0 and ((i & (i - 1)) == 0)):
-        raise Exception(f"Instruction cache size '{icache_size}' is not a power of 2")
-    elif not (d != 0 and ((d & (d - 1)) == 0)):
-        raise Exception(f"Data cache size '{dcache_size}' is not a power of 2")
+    for variable in variables:
+        if variable.units == "B":
+            size_pattern = r"^\d+(k|M)?B$"
+            if not match(size_pattern, variable.value):
+                raise Exception(f"Invalid {variable.name} '{variable.value}'")
+            variable_size = size_string_to_int(variable.value)
+            if not (
+                variable_size != 0 and ((variable_size & (variable_size - 1)) == 0)
+            ):
+                raise Exception(
+                    f"{variable.name} '{variable.value}' is not a power of 2"
+                )
 
     for argument in arguments:
         command = [
@@ -57,18 +55,12 @@ def run_simulation(
             "gem5/configs/example/se.py",
             f"--cmd={binary}",
             f"--options={argument}",
-            # Add arguments to se.py here
             "--cpu-type=TimingSimpleCPU",
             "--caches",
-            f"--l1i_size={icache_size}",
-            f"--l1d_size={dcache_size}",
         ]
-        if dcache_associativity and cacheline_size:
-            command += [
-                f"--l1d_assoc={dcache_associativity}",
-                f"--cacheline_size={cacheline_size}",
-            ]
-        output = subprocess.PIPE if not args.verbose else None
+        for variable in variables:
+            command.append(f"--{variable.argument}={variable.value}")
+        output = subprocess.PIPE if not verbose else None
         process = subprocess.Popen(command, stdout=output, stderr=output)
         try:
             process.wait()
@@ -77,38 +69,31 @@ def run_simulation(
             exit()
 
 
-def cpi():
+def get_statistic(statistic):
     with open("gem5/m5out/stats.txt", "r") as stats_file:
         line = stats_file.readline()
         if not line:
             raise Exception(
-                "Empty stats.txt, try using the -v/--verbose flag to check simulation output"
+                "Empty stats.txt, try using the --verbose flag to check simulation output"
             )
         while line:
-            if line.startswith("simInsts"):
-                instruction_count = int(line.split()[1])
-            elif line.startswith("system.cpu.numCycles"):
-                cycle_count = int(line.split()[1])
-                return float(cycle_count / instruction_count)
+            if statistic == "cpi":
+                if line.startswith("simInsts"):
+                    instruction_count = int(line.split()[1])
+                elif line.startswith("system.cpu.numCycles"):
+                    cycle_count = int(line.split()[1])
+                    return float(cycle_count / instruction_count)
+            elif statistic == "overall_dcache_miss_rate":
+                if line.startswith("system.cpu.dcache.overallMissRate::cpu.data"):
+                    return float(line.split()[1])
             line = stats_file.readline()
-        if not instruction_count:
-            raise Exception("Could not find instruction count in stats.txt")
-        elif not cycle_count:
-            raise Exception("Could not find cycle count in stats.txt")
-
-
-def overall_miss_rate():
-    with open("gem5/m5out/stats.txt", "r") as stats_file:
-        line = stats_file.readline()
-        if not line:
-            raise Exception(
-                "Empty stats.txt, try using the -v/--verbose flag to check simulation output"
-            )
-        while line:
-            if line.startswith("system.cpu.dcache.overallMissRate::cpu.data"):
-                return float(line.split()[1])
-            line = stats_file.readline()
-        raise Exception("Could not find overall miss rate in stats.txt")
+        if statistic == "cpi":
+            if not instruction_count:
+                raise Exception("Could not find instruction count in stats.txt")
+            elif not cycle_count:
+                raise Exception("Could not find cycle count in stats.txt")
+        elif statistic == "overall_dcache_miss_rate":
+            raise Exception("Could not find overall dcache miss rate in stats.txt")
 
 
 def size_string_to_int(size):
@@ -140,6 +125,7 @@ def format_time(time_in_seconds):
             return (
                 f"{int(time_in_seconds / 3600)}h {int((time_in_seconds % 3600) / 60)}m"
             )
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -249,12 +235,11 @@ def main():
     )
 
     args = parser.parse_args()
-    
+
     if args.test:
         args.benchmarks = ["dummy"]
-    
+
     args.parts = [part.replace("1", "a").replace("2", "b") for part in args.parts]
-    
 
     print("Running with the following parameters:")
     print(f"  test: {args.test}")
@@ -271,95 +256,125 @@ def main():
     print(f"  output_directory: {args.output_directory}")
     print(f"  append: {args.append}")
     print(f"  verbose: {args.verbose}")
-    input("Press enter to confirm and continue...")
+    input("Press enter to confirm and continue... ")
 
     args.output_directory = f"out/{args.output_directory}"
     if not path.exists(args.output_directory):
         makedirs(args.output_directory)
-    elif (
+    elif not args.append and (
         input(f"Directory '{args.output_directory}' already exists. Overwrite? [y/N]: ")
         != "y"
     ):
         exit()
 
-    output_files = [
-        open(f"{args.output_directory}/part_{part}.csv", "a" if args.append else "w")
-        for part in args.parts
-    ]
+    class Part:
+        def __init__(self, output_file, variables, statistic):
+            self.output_file = output_file
+            self.variables = variables
+            self.statistic = statistic
 
-    file_number = 0
-    if "a" in args.parts:
-        output_files[file_number].write(
-            "Architecture,Benchmark,ICache Size [B],DCache Size [B],CPI\n"
+    class Variable:
+        def __init__(self, value, argument, name, units=None):
+            self.value = value
+            self.argument = argument
+            self.name = name
+            self.units = units
+
+    parts = {}
+    for part in args.parts:
+        output_file = open(
+            f"{args.output_directory}/part_{part}.csv", "a" if args.append else "w"
         )
-        file_number += 1
-    if "b" in args.parts:
-        output_files[file_number].write(
-            "Architecture,Benchmark,DCache Associativity,Cacheline Size [B],Overall Miss Rate\n"
-        )
-        file_number += 1
+        if part == "a":
+            variables = [
+                Variable(args.icache_sizes, "l1i_size", "ICache Size", "B"),
+                Variable(args.dcache_sizes, "l1d_size", "DCache Size", "B"),
+            ]
+            statistic = "Cycles Per Instruction"
+        elif part == "b":
+            variables = [
+                Variable(
+                    args.dcache_associativity, "l1d_assoc", "DCache Associativity"
+                ),
+                Variable(args.cacheline_sizes, "cacheline_size", "Cacheline Size"),
+            ]
+            statistic = "Overall DCache Miss Rate"
+        if not args.append:
+            output_file.write(
+                "Architecture,Benchmark,"
+                + ",".join(
+                    variable.name
+                    + (
+                        f"({variable.units})"
+                        if variable.units
+                        else ""
+                    )
+                    for variable in variables
+                )
+                + f",{statistic}\n"
+            )
+        parts[part] = Part(output_file, variables, statistic)
 
     script_start = time()
     for architecture in args.architectures:
         for benchmark in args.benchmarks:
-            file_number = 0
-            if "a" in args.parts:
-                for icache_size in args.icache_sizes:
-                    for dcache_size in args.dcache_sizes:
-                        print(
-                            f"Simulating {benchmark.lower()} on {architecture.upper()} with {icache_size} icache and {dcache_size} dcache...",
-                            end=" ",
+            for part in parts.values():
+                for variable_value_0 in part.variables[0].value:
+                    for variable_value_1 in part.variables[1].value:
+                        variables = (
+                            Variable(
+                                variable_value_0,
+                                part.variables[0].argument,
+                                part.variables[0].name,
+                                part.variables[0].units,
+                            ),
+                            Variable(
+                                variable_value_1,
+                                part.variables[1].argument,
+                                part.variables[1].name,
+                                part.variables[1].units,
+                            ),
                         )
-                        stdout.flush()
+                        print(
+                            f"Architecture: {architecture}, Benchmark: {benchmark}, "
+                            + ", ".join(
+                                f"{variable.name}: {variable.value}"
+                                for variable in variables
+                            ),
+                            end="... ",
+                            flush=True,
+                        )
                         simulation_start = time()
                         run_simulation(
-                            args,
                             architecture,
                             benchmark,
-                            icache_size=icache_size,
-                            dcache_size=dcache_size,
+                            args.benchmark_size,
+                            variables,
+                            args.verbose,
                         )
                         simulation_end = time()
                         print(
-                            f"Done. ({format_time(simulation_end - simulation_start)})"
+                            f"done. ({format_time(simulation_end - simulation_start)})"
                         )
-                        output_files[file_number].write(
-                            f"{architecture.upper()},{benchmark.lower()},{size_string_to_int(icache_size)},{size_string_to_int(dcache_size)},{cpi()}\n"
+                        part.output_file.write(
+                            f"{architecture},{benchmark},"
+                            + ",".join(
+                                str(size_string_to_int(variable.value))
+                                if variable.units == "B"
+                                else str(variable.value)
+                                for variable in variables
+                            )
+                            + f",{get_statistic(part.statistic)}\n"
                         )
-                        output_files[file_number].flush()
-                file_number += 1
-            if "b" in args.parts:
-                for dcache_associativity in args.dcache_associativity:
-                    for cacheline_size in args.cacheline_sizes:
-                        print(
-                            f"Simulating {benchmark.lower()} on {architecture.upper()} with {dcache_associativity} way dcache and {cacheline_size}B cachelines...",
-                            end=" ",
-                        )
-                        stdout.flush()
-                        simulation_start = time()
-                        run_simulation(
-                            args,
-                            architecture,
-                            benchmark,
-                            dcache_associativity=dcache_associativity,
-                            cacheline_size=cacheline_size,
-                        )
-                        simulation_end = time()
-                        print(
-                            f"Done. ({format_time(simulation_end - simulation_start)})"
-                        )
-                        output_files[file_number].write(
-                            f"{architecture.upper()},{benchmark.lower()},{dcache_associativity},{cacheline_size},{overall_miss_rate()}\n"
-                        )
-                        output_files[file_number].flush()
-                file_number += 1
+                        part.output_file.flush()
     script_end = time()
     print(
-        f"Script complete. Total time taken: {format_time(script_end - script_start)}"
+        f"Script complete! Total time taken: {format_time(script_end - script_start)}"
     )
 
-    for output_file in output_files:
-        output_file.close()
+    for part in parts.values():
+        part.output_file.close()
+
 
 if __name__ == "__main__":
     main()
