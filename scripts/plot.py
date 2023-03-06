@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "input_file",
         action="store",
-        default="example/results.csv",
+        default="results.csv",
         type=str,
         nargs="?",
     )
@@ -77,17 +77,30 @@ if __name__ == "__main__":
     for architecture in set(row[0] for row in results[1:]):
         for benchmark in set(row[1] for row in results[1:]):
             fig, ax = plt.subplots()
-            for icache_size in set(row[2] for row in results[1:]):
+            unsorted_set = set(row[2] for row in results[1:])
+            sorted_set = sorted(unsorted_set, key=lambda x: int(x))
+            # print(sorted_set)
+            for icache_size in sorted_set:
+                print(icache_size)
                 x = []
                 y = []
                 for row in results[1:]:
                     if row[0] == architecture and row[1] == benchmark and row[2] == icache_size:
+                        print(row[3])
                         x.append(int(row[3]))
                         y.append(float(row[4]))
-                ax.plot(x, y, label=icache_size)
+
+                if int(icache_size) > 512:
+                    legend_icache = str(int(int(icache_size)/1024)) + "KB"
+                else:
+                    legend_icache = str(icache_size) + "B"
+
+
+                ax.plot(x, y, label=f"{legend_icache}")
             plt.xscale("log", base=2)
+            
             ax.set_xlabel(results[0][3])
             ax.set_ylabel(results[0][4])
-            ax.set_title(f"{architecture} {benchmark}")
+            ax.set_title(f"{architecture} {benchmark} Cache Size vs CPI1")
             ax.legend()
             fig.savefig(f"{args.output_directory}/{architecture}_{benchmark}.png")
