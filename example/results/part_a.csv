@@ -1,4 +1,4 @@
-Architecture,Benchmark,Instruction Cache Size [B],Data Cache Size [B],CPI
+Architecture,Benchmark,ICache Size [B],DCache Size [B],Cycles Per Instruction
 X86,crc,128,128,23.96873798
 X86,crc,128,256,21.96031175
 X86,crc,128,512,15.79506549

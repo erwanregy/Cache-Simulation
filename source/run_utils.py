@@ -7,6 +7,7 @@ from re import match
 
 
 def run_simulation(
+    gem5_path,
     architecture,
     benchmark,
     benchmark_size,
@@ -50,9 +51,9 @@ def run_simulation(
 
     for argument in arguments:
         command = [
-            f"gem5/build/{architecture.upper()}/gem5.opt",
-            "--outdir=gem5/m5out",
-            "gem5/configs/example/se.py",
+            f"{gem5_path}/build/{architecture.upper()}/gem5.opt",
+            f"--outdir={gem5_path}/m5out",
+            f"{gem5_path}/configs/example/se.py",
             f"--cmd={binary}",
             f"--options={argument}",
             "--cpu-type=TimingSimpleCPU",
@@ -69,21 +70,21 @@ def run_simulation(
             exit()
 
 
-def get_statistic(statistic):
-    with open("gem5/m5out/stats.txt", "r") as stats_file:
+def get_statistic(gem5_path, statistic):
+    with open(f"{gem5_path}/m5out/stats.txt", "r") as stats_file:
         line = stats_file.readline()
         if not line:
             raise Exception(
                 "Empty stats.txt, try using the --verbose flag to check simulation output"
             )
         while line:
-            if statistic == "cpi":
+            if statistic == "Cycles Per Instruction":
                 if line.startswith("simInsts"):
                     instruction_count = int(line.split()[1])
                 elif line.startswith("system.cpu.numCycles"):
                     cycle_count = int(line.split()[1])
                     return float(cycle_count / instruction_count)
-            elif statistic == "overall_dcache_miss_rate":
+            elif statistic == "Overall DCache Miss Rate":
                 if line.startswith("system.cpu.dcache.overallMissRate::cpu.data"):
                     return float(line.split()[1])
             line = stats_file.readline()
@@ -142,7 +143,7 @@ def parse_arguments():
         help="Parts of the assignment to run.",
         action="store",
         default=["a", "b"],
-        choices=["a", "b", "1", "2"],
+        choices=["a", "b"],
         type=str.lower,
         nargs="+",
     )
@@ -233,15 +234,22 @@ def parse_arguments():
         help="Print the output of the simulations.",
         action="store_true",
     )
+    parser.add_argument(
+        "-g5",
+        "--gem5_path",
+        help="gem5 repository path.",
+        action="store",
+        default="gem5",
+        type=str,
+        nargs="?",
+    )
 
     arguments = parser.parse_args()
+    
+    arguments.test = True
 
     if arguments.test:
         arguments.benchmarks = ["dummy"]
-
-    arguments.parts = [
-        part.replace("1", "a").replace("2", "b") for part in arguments.parts
-    ]
 
     return arguments
 
@@ -262,6 +270,7 @@ def print_arguments(arguments):
     print(f"  output_directory: {arguments.output_directory}")
     print(f"  append: {arguments.append}")
     print(f"  verbose: {arguments.verbose}")
+    print(f"  gem5_path: {arguments.gem5_path}")
     input("Press enter to confirm and continue... ")
 
 
@@ -324,6 +333,7 @@ def setup_parts(arguments):
                 )
                 + f",{statistic}\n"
             )
+            output_file.flush()
 
         parts[part] = Part(output_file, variables, statistic)
 
@@ -332,9 +342,9 @@ def setup_parts(arguments):
 
 def run_simulations(arguments, parts):
     script_start = time()
-    for architecture in arguments.architectures:
-        for benchmark in arguments.benchmarks:
-            for part in parts.values():
+    for part in parts.values():
+        for architecture in arguments.architectures:
+            for benchmark in arguments.benchmarks:
                 for variable_value_0 in part.variables[0].value:
                     for variable_value_1 in part.variables[1].value:
                         variables = (
@@ -362,6 +372,7 @@ def run_simulations(arguments, parts):
                         )
                         simulation_start = time()
                         run_simulation(
+                            arguments.gem5_path,
                             architecture,
                             benchmark,
                             arguments.benchmark_size,
@@ -380,7 +391,7 @@ def run_simulations(arguments, parts):
                                 else str(variable.value)
                                 for variable in variables
                             )
-                            + f",{get_statistic(part.statistic)}\n"
+                            + f",{get_statistic(arguments.gem5_path, part.statistic)}\n"
                         )
                         part.output_file.flush()
     script_end = time()
