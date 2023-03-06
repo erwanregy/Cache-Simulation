@@ -245,8 +245,6 @@ def parse_arguments():
     )
 
     arguments = parser.parse_args()
-    
-    arguments.test = True
 
     if arguments.test:
         arguments.benchmarks = ["dummy"]
@@ -343,7 +341,8 @@ def setup_parts(arguments):
 def run_simulations(arguments, parts):
     script_start = time()
     for part in parts.values():
-        for architecture in arguments.architectures:
+        architectures = arguments.architectures if part == "a" else [arguments.architectures[0]]
+        for architecture in architectures:
             for benchmark in arguments.benchmarks:
                 for variable_value_0 in part.variables[0].value:
                     for variable_value_1 in part.variables[1].value:
