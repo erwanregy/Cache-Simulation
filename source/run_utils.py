@@ -7,27 +7,26 @@ from re import match
 
 
 def run_simulation(
-    gem5_path,
+    arguments,
     architecture,
     benchmark,
-    benchmark_size,
     variables,
-    verbose,
+    part,
 ):
     if benchmark.lower() == "dummy":
         binary = "benchmarks/dummy/dummy"
-        arguments = [""]
+        options = [""]
     elif benchmark.lower() == "susan":
-        susan_path = f"benchmarks/susan"
-        binary = f"{susan_path}/susan"
-        arguments = [
-            f"{susan_path}/input_{benchmark_size}.pgm {susan_path}/output_{benchmark_size}.smoothing.pgm -s",
-            f"{susan_path}/input_{benchmark_size}.pgm {susan_path}/output_{benchmark_size}.edges.pgm -e",
-            f"{susan_path}/input_{benchmark_size}.pgm {susan_path}/output_{benchmark_size}.corners.pgm -c",
+        path = f"benchmarks/susan"
+        binary = f"{path}/susan"
+        types = ["smoothing", "edges", "corners"]
+        options = [
+            f"{path}/input_{arguments.benchmark_size}.pgm {path}/output_{arguments.benchmark_size}.{type}.pgm -{type[0]}"
+            for type in types
         ]
     elif benchmark.lower() == "crc":
         binary = "benchmarks/CRC32/crc"
-        arguments = [f"benchmarks/adpcm/data/{benchmark_size}.pcm"]
+        options = [f"benchmarks/adpcm/data/{arguments.benchmark_size}.pcm"]
     else:
         raise Exception(f"Invalid benchmark '{benchmark}'")
 
@@ -49,19 +48,22 @@ def run_simulation(
                     f"{variable.name} '{variable.value}' is not a power of 2"
                 )
 
-    for argument in arguments:
+    for option in options:
         command = [
-            f"{gem5_path}/build/{architecture.upper()}/gem5.opt",
-            f"--outdir={gem5_path}/m5out",
-            f"{gem5_path}/configs/example/se.py",
+            f"{arguments.gem5_path}/build/{architecture.upper()}/gem5.opt",
+            f"--outdir={arguments.gem5_path}/m5out",
+            f"{arguments.gem5_path}/configs/example/se.py",
             f"--cmd={binary}",
-            f"--options={argument}",
+            f"--options={option}",
             "--cpu-type=TimingSimpleCPU",
             "--caches",
         ]
         for variable in variables:
             command.append(f"--{variable.argument}={variable.value}")
-        output = subprocess.PIPE if not verbose else None
+        if part == "b":
+            command.append(f"--l1i_size=16kB")
+            command.append(f"--l1d_size=16kB")
+        output = subprocess.PIPE if not arguments.verbose else None
         process = subprocess.Popen(command, stdout=output, stderr=output)
         try:
             process.wait()
@@ -201,8 +203,9 @@ def parse_arguments():
         help="Cacheline sizes to run the simulations for.",
         action="store",
         default=[2**i for i in range(4, 8)],
-        choices=[2**i for i in range(4, 8)],
+        choices=[2**i for i in range(4, 11)],
         type=int,
+        nargs="+",
     )
     parser.add_argument(
         "-bs",
@@ -261,6 +264,9 @@ def print_arguments(arguments):
     if "a" in arguments.parts:
         print(f"  icache_sizes: {arguments.icache_sizes}")
         print(f"  dcache_sizes: {arguments.dcache_sizes}")
+    else:
+        print(f"  icache_sizes: 16kB")
+        print(f"  dcache_sizes: 16kB")
     if "b" in arguments.parts:
         print(f"  dcache_associativity: {arguments.dcache_associativity}")
         print(f"  cacheline_size: {arguments.cacheline_sizes}")
@@ -286,7 +292,8 @@ def setup_output_directory(arguments):
 
 
 class Part:
-    def __init__(self, output_file, variables, statistic):
+    def __init__(self, part, output_file, variables, statistic):
+        self.part = part
         self.output_file = output_file
         self.variables = variables
         self.statistic = statistic
@@ -301,25 +308,28 @@ class Variable:
 
 
 def setup_parts(arguments):
-    parts = {}
+    parts = []
+
     for part in arguments.parts:
         output_file = open(
             f"{arguments.output_directory}/part_{part}.csv",
             "a" if arguments.append else "w",
         )
         if part == "a":
-            variables = [
+            variables = (
                 Variable(arguments.icache_sizes, "l1i_size", "ICache Size", "B"),
                 Variable(arguments.dcache_sizes, "l1d_size", "DCache Size", "B"),
-            ]
+            )
             statistic = "Cycles Per Instruction"
         elif part == "b":
-            variables = [
+            variables = (
                 Variable(
                     arguments.dcache_associativity, "l1d_assoc", "DCache Associativity"
                 ),
-                Variable(arguments.cacheline_sizes, "cacheline_size", "Cacheline Size"),
-            ]
+                Variable(
+                    arguments.cacheline_sizes, "cacheline_size", "Cacheline Size"
+                ),
+            )
             statistic = "Overall DCache Miss Rate"
 
         if not arguments.append:
@@ -333,15 +343,17 @@ def setup_parts(arguments):
             )
             output_file.flush()
 
-        parts[part] = Part(output_file, variables, statistic)
+        parts.append(Part(part, output_file, variables, statistic))
 
     return parts
 
 
 def run_simulations(arguments, parts):
     script_start = time()
-    for part in parts.values():
-        architectures = arguments.architectures if part == "a" else [arguments.architectures[0]]
+    for part in parts:
+        architectures = (
+            [arguments.architectures[0]] if part != "a" else arguments.architectures
+        )
         for architecture in architectures:
             for benchmark in arguments.benchmarks:
                 for variable_value_0 in part.variables[0].value:
@@ -371,12 +383,11 @@ def run_simulations(arguments, parts):
                         )
                         simulation_start = time()
                         run_simulation(
-                            arguments.gem5_path,
+                            arguments,
                             architecture,
                             benchmark,
-                            arguments.benchmark_size,
                             variables,
-                            arguments.verbose,
+                            part.part,
                         )
                         simulation_end = time()
                         print(
@@ -393,6 +404,7 @@ def run_simulations(arguments, parts):
                             + f",{get_statistic(arguments.gem5_path, part.statistic)}\n"
                         )
                         part.output_file.flush()
+
     script_end = time()
     print(
         f"Script complete! Total time taken: {format_time(script_end - script_start)}"
